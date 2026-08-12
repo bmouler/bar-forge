@@ -71,8 +71,6 @@ def _calibrate_imbalance(increments: list[float], target_bars: int) -> float:
     low = 0.0
     for _ in range(_MAX_BISECTION_STEPS):
         middle = (low + high) / 2.0
-        if middle <= 0.0:
-            break
         count = _count_imbalance_bars(increments, middle)
         if abs(count - target_bars) <= tolerance:
             return middle

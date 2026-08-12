@@ -1,5 +1,7 @@
 # bar-forge
 
+[![CI](https://github.com/bmouler/bar-forge/actions/workflows/ci.yml/badge.svg)](https://github.com/bmouler/bar-forge/actions/workflows/ci.yml) [![branch coverage](https://img.shields.io/badge/branch%20coverage-100%25-brightgreen)](https://github.com/bmouler/bar-forge/actions/workflows/ci.yml) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/) [![MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 Build market data bars on an activity clock instead of a wall clock, and normalise the
 resulting features without leaking the future.
 

@@ -25,4 +25,4 @@ jobs:
       - name: Format
         run: ruff format --check .
       - name: Test
-        run: python -m pytest -q
+        run: python -m pytest --cov=bar_forge --cov-branch --cov-report=term-missing --cov-fail-under=100 -q

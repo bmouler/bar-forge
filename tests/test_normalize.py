@@ -231,3 +231,8 @@ def test_bar_transforms_reject_non_bar_elements(transform):
 def test_bar_transforms_reject_a_string(transform):
     with pytest.raises(TypeError, match="got a string"):
         transform("not bars")
+
+
+def test_volume_normalize_rejects_a_non_iterable():
+    with pytest.raises(TypeError, match="bars must be an iterable of Bar"):
+        volume_normalize(42)

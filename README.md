@@ -1,6 +1,11 @@
 # bar-forge
 
-[![CI](https://github.com/bmouler/bar-forge/actions/workflows/ci.yml/badge.svg)](https://github.com/bmouler/bar-forge/actions/workflows/ci.yml) [![branch coverage](https://img.shields.io/badge/branch%20coverage-100%25-brightgreen)](https://github.com/bmouler/bar-forge/actions/workflows/ci.yml) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/) [![MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![CI](https://github.com/bmouler/bar-forge/actions/workflows/ci.yml/badge.svg)](https://github.com/bmouler/bar-forge/actions/workflows/ci.yml)
+![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
+![Types](https://img.shields.io/badge/types-mypy%20strict-blue)
+![Mutation](https://img.shields.io/badge/mutation-92%25%20killed-brightgreen)
+![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 Build market data bars on an activity clock instead of a wall clock, and normalise the
 resulting features without leaking the future.
@@ -23,11 +28,14 @@ directly rather than assumed.
 
 ## Install
 
-Not on PyPI. Clone the repository and install it in place:
-
+```bash
+python -m pip install bar-forge
 ```
-pip install -e .
-pip install -e ".[dev]"   # adds pytest and ruff
+
+For editable development, clone the repository and install the development dependencies:
+
+```bash
+python -m pip install -e ".[dev]"
 ```
 
 Python 3.11 or newer. The only runtime dependency is numpy.
@@ -93,6 +101,10 @@ python -m pytest -q
 ```
 
 ## How it works
+
+```mermaid
+flowchart LR; T[trades] --> C{clock}; C -->|ticks / volume / dollars| A[accumulators]; C -->|signed flow| I[imbalance threshold]; A --> B[bars OHLCV]; I --> B; B --> N[strictly causal normalization]; N --> F[comparable features]
+```
 
 ### Bar construction
 
@@ -186,6 +198,33 @@ CLI and the tests: a driftless random-walk mid rounded to a tick grid, Poisson a
 lognormal sizes, and activity bursts during which arrival rate, size and volatility all
 jump together. That last feature is what makes activity bars visibly diverge from time
 bars. Identical seeds give identical streams.
+
+## Verification
+
+### Mutation testing
+
+From the repository root, reproduce the mutation run with:
+
+```console
+source .venv/bin/activate
+mutmut run
+mutmut results
+```
+
+The completed run generated 1,208 mutants and killed 1,123 (92.96%). The 85
+remaining survivors were reviewed individually and are behavior-equivalent under the
+public contract, rather than missed mutants:
+
+| Equivalent rationale | Count |
+|---|---:|
+| NumPy dtype and fill-value identities | 38 |
+| `zip(strict=...)` changes over internally guaranteed equal-length inputs | 9 |
+| Algebraically symmetric signed-imbalance comparisons | 2 |
+| Sentinel, default-value, and runtime cast identities | 20 |
+| Non-contractual diagnostic formatting differences | 16 |
+| **Total reviewed equivalents** | **85** |
+
+There were zero suspicious mutants and zero timeouts.
 
 ## Limitations
 

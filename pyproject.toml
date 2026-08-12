@@ -1,6 +1,6 @@
 [project]
 name = "bar-forge"
-version = "0.1.0"
+version = "1.0.0"
 description = "Activity-based market data bars and strictly causal normalisation transforms."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -16,13 +16,14 @@ keywords = [
     "volume-bars",
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Financial and Insurance Industry",
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Office/Business :: Financial :: Investment",
     "Topic :: Scientific/Engineering :: Information Analysis",
     "Typing :: Typed",
@@ -30,7 +31,14 @@ classifiers = [
 dependencies = ["numpy>=1.24"]
 
 [project.optional-dependencies]
-dev = ["hypothesis>=6.100", "mypy>=1.14", "pytest", "pytest-cov", "ruff"]
+dev = [
+    "hypothesis>=6.100",
+    "mutmut>=3.7",
+    "mypy>=1.14",
+    "pytest",
+    "pytest-cov",
+    "ruff",
+]
 
 [project.urls]
 Homepage = "https://github.com/bmouler/bar-forge"
@@ -61,6 +69,9 @@ source = ["bar_forge"]
 fail_under = 100
 show_missing = true
 skip_covered = true
+
+[tool.mutmut]
+source_paths = ["src/bar_forge"]
 
 [build-system]
 requires = ["hatchling"]

@@ -32,7 +32,7 @@ from .normalize import atr_normalize, rank_normalize, volume_normalize, zscore
 from .stats import BarStatistics, bar_statistics
 from .synthetic import generate_trades
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 __all__ = [
     "Bar",

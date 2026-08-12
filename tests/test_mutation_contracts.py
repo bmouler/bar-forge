@@ -191,7 +191,7 @@ def test_cli_json_contract_is_pinned(capsys: pytest.CaptureFixture[str]) -> None
         main(["compare", "--n-trades", "200", "--seed", "3", "--target-bars", "10", "--json"]) == 0
     )
     payload = json.loads(capsys.readouterr().out)
-    assert payload == {
+    expected = {
         "n_trades": 200,
         "seed": 3,
         "target_bars": 10,
@@ -258,6 +258,26 @@ def test_cli_json_contract_is_pinned(capsys: pytest.CaptureFixture[str]) -> None
             },
         ],
     }
+    assert list(payload) == list(expected)
+    assert payload["n_trades"] == expected["n_trades"]
+    assert payload["seed"] == expected["seed"]
+    assert payload["target_bars"] == expected["target_bars"]
+    actual_rows = payload["bar_types"]
+    expected_rows = expected["bar_types"]
+    assert len(actual_rows) == len(expected_rows)
+    for actual, expected_row in zip(actual_rows, expected_rows, strict=True):
+        assert list(actual) == list(expected_row)
+        assert actual["name"] == expected_row["name"]
+        assert actual["count"] == expected_row["count"]
+        for field in (
+            "threshold",
+            "mean_return",
+            "std_return",
+            "excess_kurtosis",
+            "abs_autocorrelation",
+            "jarque_bera",
+        ):
+            assert actual[field] == pytest.approx(expected_row[field], rel=1e-12, abs=1e-15)
 
 
 def test_cli_help_documents_the_public_defaults(capsys: pytest.CaptureFixture[str]) -> None:

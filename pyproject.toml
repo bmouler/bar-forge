@@ -30,7 +30,7 @@ classifiers = [
 dependencies = ["numpy>=1.24"]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov", "ruff"]
+dev = ["hypothesis>=6.100", "pytest", "pytest-cov", "ruff"]
 
 [project.urls]
 Homepage = "https://github.com/bmouler/bar-forge"

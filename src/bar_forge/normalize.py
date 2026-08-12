@@ -24,6 +24,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 import numpy as np
+import numpy.typing as npt
 from numpy.lib.stride_tricks import sliding_window_view
 
 from .bars import Bar
@@ -31,7 +32,7 @@ from .bars import Bar
 __all__ = ["atr_normalize", "rank_normalize", "volume_normalize", "zscore"]
 
 
-def _as_1d_float(values: Sequence[float] | np.ndarray, name: str) -> np.ndarray:
+def _as_1d_float(values: npt.ArrayLike, name: str) -> npt.NDArray[np.float64]:
     """Coerce ``values`` to a 1-D float array.
 
     Raises:
@@ -39,7 +40,7 @@ def _as_1d_float(values: Sequence[float] | np.ndarray, name: str) -> np.ndarray:
         ValueError: If the input is not one-dimensional.
     """
     try:
-        array = np.asarray(values, dtype=float)
+        array = np.asarray(values, dtype=np.float64)
     except (TypeError, ValueError) as error:
         raise TypeError(f"{name} must be a sequence of real numbers: {error}") from error
     if array.ndim != 1:
@@ -60,7 +61,9 @@ def _require_window(window: int, minimum: int) -> None:
         raise ValueError(f"window must be at least {minimum}, got {window}")
 
 
-def _bar_closes_volumes(bars: Sequence[Bar]) -> tuple[np.ndarray, np.ndarray]:
+def _bar_closes_volumes(
+    bars: Sequence[Bar],
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """Extract close and volume arrays from a bar sequence.
 
     Raises:
@@ -75,20 +78,20 @@ def _bar_closes_volumes(bars: Sequence[Bar]) -> tuple[np.ndarray, np.ndarray]:
     for index, bar in enumerate(items):
         if not isinstance(bar, Bar):
             raise TypeError(f"bars[{index}] is {type(bar).__name__}, expected Bar")
-    closes = np.array([bar.close for bar in items], dtype=float)
-    volumes = np.array([bar.volume for bar in items], dtype=float)
+    closes = np.array([bar.close for bar in items], dtype=np.float64)
+    volumes = np.array([bar.volume for bar in items], dtype=np.float64)
     return closes, volumes
 
 
-def _log_returns(closes: np.ndarray) -> np.ndarray:
+def _log_returns(closes: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     """Log returns aligned to the closing bar, with ``nan`` at index 0."""
-    out = np.full(closes.shape, np.nan)
+    out = np.full(closes.shape, np.nan, dtype=np.float64)
     if closes.size > 1:
         out[1:] = np.log(closes[1:] / closes[:-1])
     return out
 
 
-def zscore(values: Sequence[float] | np.ndarray, window: int) -> np.ndarray:
+def zscore(values: npt.ArrayLike, window: int) -> npt.NDArray[np.float64]:
     """Rolling z-score over a trailing window that ends at, and includes, ``t``.
 
     ``out[t] = (values[t] - mean(values[t - window + 1 : t + 1])) / std(...)`` using
@@ -110,7 +113,7 @@ def zscore(values: Sequence[float] | np.ndarray, window: int) -> np.ndarray:
     """
     array = _as_1d_float(values, "values")
     _require_window(window, 2)
-    out = np.full(array.shape, np.nan)
+    out = np.full(array.shape, np.nan, dtype=np.float64)
     if array.size < window:
         return out
     windows = sliding_window_view(array, window)
@@ -119,14 +122,14 @@ def zscore(values: Sequence[float] | np.ndarray, window: int) -> np.ndarray:
     scaled = np.divide(
         array[window - 1 :] - means,
         stds,
-        out=np.full(means.shape, np.nan),
+        out=np.full(means.shape, np.nan, dtype=np.float64),
         where=stds > 0.0,
     )
     out[window - 1 :] = scaled
     return out
 
 
-def rank_normalize(values: Sequence[float] | np.ndarray, window: int) -> np.ndarray:
+def rank_normalize(values: npt.ArrayLike, window: int) -> npt.NDArray[np.float64]:
     """Rolling percentile rank of ``values[t]`` within its trailing window, in [0, 1].
 
     The rank is the tie-averaged position of ``values[t]`` among the ``window``
@@ -152,7 +155,7 @@ def rank_normalize(values: Sequence[float] | np.ndarray, window: int) -> np.ndar
     """
     array = _as_1d_float(values, "values")
     _require_window(window, 2)
-    out = np.full(array.shape, np.nan)
+    out = np.full(array.shape, np.nan, dtype=np.float64)
     if array.size < window:
         return out
     windows = sliding_window_view(array, window)
@@ -163,7 +166,7 @@ def rank_normalize(values: Sequence[float] | np.ndarray, window: int) -> np.ndar
     return out
 
 
-def volume_normalize(bars: Sequence[Bar]) -> np.ndarray:
+def volume_normalize(bars: Sequence[Bar]) -> npt.NDArray[np.float64]:
     """Bar log returns divided by the volume of the bar that produced them.
 
     ``out[t] = log(close[t] / close[t - 1]) / volume[t]``. Both inputs are known at the
@@ -193,12 +196,12 @@ def volume_normalize(bars: Sequence[Bar]) -> np.ndarray:
     return np.divide(
         returns,
         volumes,
-        out=np.full(returns.shape, np.nan),
+        out=np.full(returns.shape, np.nan, dtype=np.float64),
         where=volumes > 0.0,
     )
 
 
-def atr_normalize(bars: Sequence[Bar], window: int) -> np.ndarray:
+def atr_normalize(bars: Sequence[Bar], window: int) -> npt.NDArray[np.float64]:
     """Bar price change divided by trailing average true range.
 
     ``out[t] = (close[t] - close[t - 1]) / atr[t]``, where true range for bar ``t`` is
@@ -237,12 +240,12 @@ def atr_normalize(bars: Sequence[Bar], window: int) -> np.ndarray:
         if not isinstance(bar, Bar):
             raise TypeError(f"bars[{index}] is {type(bar).__name__}, expected Bar")
     count = len(items)
-    out = np.full(count, np.nan)
+    out = np.full(count, np.nan, dtype=np.float64)
     if count < window + 2:
         return out
-    highs = np.array([bar.high for bar in items], dtype=float)
-    lows = np.array([bar.low for bar in items], dtype=float)
-    closes = np.array([bar.close for bar in items], dtype=float)
+    highs = np.array([bar.high for bar in items], dtype=np.float64)
+    lows = np.array([bar.low for bar in items], dtype=np.float64)
+    closes = np.array([bar.close for bar in items], dtype=np.float64)
     previous_closes = closes[:-1]
     true_range = np.maximum(
         highs[1:] - lows[1:],
@@ -259,7 +262,7 @@ def atr_normalize(bars: Sequence[Bar], window: int) -> np.ndarray:
     out[first:] = np.divide(
         closes[first:] - closes[first - 1 : -1],
         denominator,
-        out=np.full(denominator.shape, np.nan),
+        out=np.full(denominator.shape, np.nan, dtype=np.float64),
         where=denominator > 0.0,
     )
     return out

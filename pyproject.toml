@@ -30,7 +30,7 @@ classifiers = [
 dependencies = ["numpy>=1.24"]
 
 [project.optional-dependencies]
-dev = ["hypothesis>=6.100", "pytest", "pytest-cov", "ruff"]
+dev = ["hypothesis>=6.100", "mypy>=1.14", "pytest", "pytest-cov", "ruff"]
 
 [project.urls]
 Homepage = "https://github.com/bmouler/bar-forge"
@@ -44,6 +44,11 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+strict = true
+files = ["src"]
+python_version = "3.11"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

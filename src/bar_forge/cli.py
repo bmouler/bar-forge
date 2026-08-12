@@ -5,8 +5,9 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from typing import Protocol, cast
 
 from .bars import (
     Bar,
@@ -26,6 +27,16 @@ __all__ = ["main"]
 
 _MAX_BRACKET_STEPS = 60
 _MAX_BISECTION_STEPS = 40
+
+
+class _CompareArgs(Protocol):
+    """Typed view of arguments accepted by the ``compare`` subcommand."""
+
+    n_trades: int
+    seed: int
+    target_bars: int
+    json: bool
+    handler: Callable[[_CompareArgs], int]
 
 
 @dataclass(frozen=True, slots=True)
@@ -158,7 +169,7 @@ def _summary_line(rows: Sequence[_Row]) -> str:
     )
 
 
-def _compare(namespace: argparse.Namespace) -> int:
+def _compare(namespace: _CompareArgs) -> int:
     if namespace.target_bars < 10:
         raise ValueError(f"--target-bars must be at least 10, got {namespace.target_bars}")
     trades = generate_trades(namespace.n_trades, namespace.seed)
@@ -239,9 +250,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         Process exit status: 0 on success, 2 on invalid input.
     """
     parser = _build_parser()
-    namespace = parser.parse_args(sys.argv[1:] if argv is None else list(argv))
+    namespace = cast(
+        _CompareArgs,
+        parser.parse_args(sys.argv[1:] if argv is None else list(argv)),
+    )
     try:
-        return int(namespace.handler(namespace))
+        return namespace.handler(namespace)
     except (TypeError, ValueError) as error:
         print(f"bar-forge: {error}", file=sys.stderr)
         return 2

@@ -12,9 +12,10 @@ does not pull in scipy for four formulas.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 
 import numpy as np
+import numpy.typing as npt
 
 from .bars import Bar
 
@@ -51,10 +52,17 @@ class BarStatistics:
 
     def to_dict(self) -> dict[str, float | int]:
         """Return the statistics as a plain JSON-serialisable dictionary."""
-        return asdict(self)
+        return {
+            "count": self.count,
+            "mean_return": self.mean_return,
+            "std_return": self.std_return,
+            "excess_kurtosis": self.excess_kurtosis,
+            "abs_autocorrelation": self.abs_autocorrelation,
+            "jarque_bera": self.jarque_bera,
+        }
 
 
-def _log_returns(bars: Sequence[Bar]) -> np.ndarray:
+def _log_returns(bars: Sequence[Bar]) -> npt.NDArray[np.float64]:
     if isinstance(bars, (str, bytes)):
         raise TypeError("bars must be a sequence of Bar, got a string")
     items = list(bars)
@@ -65,7 +73,7 @@ def _log_returns(bars: Sequence[Bar]) -> np.ndarray:
         raise ValueError(
             f"bar_statistics needs at least {_MIN_BARS} bars to estimate moments, got {len(items)}"
         )
-    closes = np.array([bar.close for bar in items], dtype=float)
+    closes = np.array([bar.close for bar in items], dtype=np.float64)
     return np.log(closes[1:] / closes[:-1])
 
 

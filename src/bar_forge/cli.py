@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -99,7 +100,7 @@ def _build_rows(trades: Sequence[Trade], target_bars: int) -> list[_Row]:
     sampling condition actually fired are measured.
     """
     total_volume = sum(trade.size for trade in trades)
-    total_notional = sum(trade.price * trade.size for trade in trades)
+    total_notional = math.fsum(trade.price * trade.size for trade in trades)
     span = trades[-1].timestamp - trades[0].timestamp
     if span <= 0.0:
         raise ValueError("all trades share one timestamp; cannot calibrate time bars")

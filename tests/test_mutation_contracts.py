@@ -228,7 +228,7 @@ def test_cli_json_contract_is_pinned(capsys: pytest.CaptureFixture[str]) -> None
             },
             {
                 "name": "dollar",
-                "threshold": 352065.8429999998,
+                "threshold": 352065.843,
                 "count": 9,
                 "mean_return": 0.001470898504016415,
                 "std_return": 0.004909267150074159,

@@ -256,6 +256,38 @@ def test_non_trade_elements_are_rejected(constructor):
         constructor(payload, 2)
 
 
+@pytest.mark.parametrize("container", [list, tuple], ids=["list", "tuple"])
+@pytest.mark.parametrize("threshold", [5.0, 100.0], ids=["next-bar-trade", "current-bar-trade"])
+@pytest.mark.parametrize(
+    ("bad", "expected", "message"),
+    [
+        (object(), TypeError, r"trades\[1\] is object, expected Trade"),
+        (
+            Trade(timestamp=2.0, price=0.0, size=1.0),
+            ValueError,
+            r"trades\[1\] has non-positive price",
+        ),
+        (
+            Trade(timestamp=2.0, price=10.0, size=0.0),
+            ValueError,
+            r"trades\[1\] has non-positive size",
+        ),
+        (
+            Trade(timestamp=0.0, price=10.0, size=1.0),
+            ValueError,
+            r"trades\[1\] timestamp .* must be sorted by time",
+        ),
+    ],
+    ids=["non-trade", "non-positive-price", "non-positive-size", "unsorted"],
+)
+def test_dollar_bars_validates_trades_at_and_within_bar_boundaries(
+    container, threshold, bad, expected, message
+):
+    payload = container([Trade(timestamp=1.0, price=10.0, size=1.0), bad])
+    with pytest.raises(expected, match=message):
+        dollar_bars(payload, threshold)
+
+
 def test_tick_rule_signs_reject_non_trade_elements():
     payload = [Trade(timestamp=0.0, price=1.0, size=1.0), (1.0, 2.0, 3.0)]
     with pytest.raises(TypeError, match=r"trades\[1\]"):

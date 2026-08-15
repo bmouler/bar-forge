@@ -201,6 +201,21 @@ bars. Identical seeds give identical streams.
 
 ## Verification
 
+### End-to-end performance
+
+`PYTHONPATH=src python benchmarks/benchmark_pipeline.py --json` times public
+`dollar_bars` construction followed by causal `atr_normalize` across eight instruments and
+240,000 trades. Fixture generation, threshold calibration, and interpreter startup are outside
+the timed region; all `Bar` objects and normalized arrays are materialized inside it, and the
+validation checksum covers every field and array byte.
+
+On an Apple M3 Max with CPython 3.11.12 on 2026-08-15, 15 samples after three warmups measured
+the frozen baseline `87376cfa3890` at **46.407 ms** median and this implementation at
+**21.685 ms**, a **2.140x speedup**. Both runs produced SHA-256
+`3a406097462c8a3b12bcd078ff2032e5aac08e38adc22ca7afa0f1643f82f7ee`. These are local
+in-process timings, not a portability guarantee; rerun the command on the target machine and
+point `PYTHONPATH` at a worktree of the baseline commit for a direct comparison.
+
 ### Mutation testing
 
 From the repository root, reproduce the mutation run with:

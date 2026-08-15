@@ -332,9 +332,111 @@ def dollar_bars(
         ValueError: If ``dollars_per_bar`` is not strictly positive, or trades are invalid.
     """
     _require_positive("dollars_per_bar", dollars_per_bar)
-    return _accumulation_bars(
-        trades, float(dollars_per_bar), lambda trade: trade.price * trade.size, include_partial
-    )
+    threshold = float(dollars_per_bar)
+    bars: list[Bar] = []
+    append = bars.append
+    trade_type = Trade
+    iterator = iter(trades)
+    previous_timestamp: float | None = None
+    index = -1
+
+    # Dollar bars are the recommended production constructor.  Each outer iteration
+    # starts one bar, while the inner loop updates it until the threshold is reached.
+    # Keeping the aggregate in local scalars avoids a validating generator, a callback,
+    # a method call, and an empty-accumulator branch for every trade.
+    while True:
+        try:
+            trade = next(iterator)
+        except StopIteration:
+            return bars
+        index += 1
+        if not isinstance(trade, trade_type):
+            raise TypeError(f"trades[{index}] is {type(trade).__name__}, expected Trade")
+        timestamp = trade.timestamp
+        price = trade.price
+        size = trade.size
+        if not price > 0.0:
+            raise ValueError(f"trades[{index}] has non-positive price {price!r}")
+        if not size > 0.0:
+            raise ValueError(f"trades[{index}] has non-positive size {size!r}")
+        if previous_timestamp is not None and timestamp < previous_timestamp:
+            raise ValueError(
+                f"trades[{index}] timestamp {timestamp!r} precedes the previous "
+                f"timestamp {previous_timestamp!r}; trades must be sorted by time"
+            )
+        previous_timestamp = timestamp
+
+        start_index = index
+        start_time = timestamp
+        end_time = timestamp
+        open_price = price
+        high = price
+        low = price
+        close = price
+        volume = size
+        notional = price * size
+
+        if notional < threshold:
+            for trade in iterator:
+                index += 1
+                if not isinstance(trade, trade_type):
+                    raise TypeError(f"trades[{index}] is {type(trade).__name__}, expected Trade")
+                timestamp = trade.timestamp
+                price = trade.price
+                size = trade.size
+                if not price > 0.0:
+                    raise ValueError(f"trades[{index}] has non-positive price {price!r}")
+                if not size > 0.0:
+                    raise ValueError(f"trades[{index}] has non-positive size {size!r}")
+                if timestamp < previous_timestamp:
+                    raise ValueError(
+                        f"trades[{index}] timestamp {timestamp!r} precedes the previous "
+                        f"timestamp {previous_timestamp!r}; trades must be sorted by time"
+                    )
+                previous_timestamp = timestamp
+
+                if price > high:
+                    high = price
+                elif price < low:
+                    low = price
+                close = price
+                end_time = timestamp
+                volume += size
+                notional += price * size
+                if notional >= threshold:
+                    break
+            else:
+                if include_partial:
+                    append(
+                        Bar(
+                            start_time,
+                            end_time,
+                            open_price,
+                            high,
+                            low,
+                            close,
+                            volume,
+                            notional,
+                            index - start_index + 1,
+                            min(max(notional / volume, low), high),
+                        )
+                    )
+                return bars
+
+        append(
+            Bar(
+                start_time,
+                end_time,
+                open_price,
+                high,
+                low,
+                close,
+                volume,
+                notional,
+                index - start_index + 1,
+                min(max(notional / volume, low), high),
+            )
+        )
 
 
 def tick_rule_signs(trades: Iterable[Trade]) -> list[int]:

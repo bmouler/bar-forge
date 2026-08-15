@@ -1,6 +1,6 @@
 [project]
 name = "bar-forge"
-version = "1.0.0"
+version = "1.0.1"
 description = "Activity-based market data bars and strictly causal normalisation transforms."
 readme = "README.md"
 requires-python = ">=3.11"

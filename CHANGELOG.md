@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-08-15
+
 - Fused concrete-sequence `dollar_bars` construction into one validated streaming state machine while preserving every `Bar` field and error.
 - Added a deterministic end-to-end dollar-bar and causal-normalisation benchmark with exact output checksums.
 
